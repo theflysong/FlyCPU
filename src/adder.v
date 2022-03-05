@@ -88,18 +88,114 @@ module Adder8 (
 endmodule
 
 module Adder32 (
-    input [31:0]A,
-    input [31:0]B,
+    input [63:0]A,
+    input [63:0]B,
     input Ci,
-    output [31:0]S,
+    output [63:0]S,
     output Co);
 
-    wire C[4:1];
+    wire C[7:1];
 
     Adder8 a0(A[7:0], B[7:0], Ci, S[7:0], C[1]);
     Adder8 a1(A[15:8], B[15:8], C[1], S[15:8], C[2]);
     Adder8 a2(A[23:16], B[23:16], C[2], S[23:16], C[3]);
     Adder8 a3(A[31:24], B[31:24], C[3], S[31:24], C[4]);
+    Adder8 a4(A[39:32], B[39:32], C[4], S[39:32], C[5]);
+    Adder8 a5(A[47:40], B[47:40], C[5], S[47:40], C[6]);
+    Adder8 a6(A[55:48], B[55:48], C[6], S[55:48], C[7]);
+    Adder8 a7(A[63:56], B[63:56], C[7], S[63:56], Co);
+endmodule
 
-    assign Co = C[4];
+module Suber32 (
+    input [63:0]A,
+    input [63:0]B,
+    output [63:0]S,
+    output OF);
+
+    wire [63:0]_B = ~B;
+    wire _OF;
+
+    Adder32 adder(A, _B, 1'b1, S, _OF);
+
+    assign OF = ~_OF;
+endmodule
+
+module mux1621(
+    input [63:0]S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11, S12, S13, S14, S15, S16,
+    input [4:0]F,
+    output [63:0]S);
+
+    assign S = F == 4'b0000 ? S1 :
+               F == 4'b0001 ? S2 :
+               F == 4'b0010 ? S3 :
+               F == 4'b0011 ? S4 :
+               F == 4'b0100 ? S5 :
+               F == 4'b0101 ? S6 :
+               F == 4'b0110 ? S7 :
+               F == 4'b0111 ? S8 :
+               F == 4'b1000 ? S9 :
+               F == 4'b1001 ? S10 :
+               F == 4'b1010 ? S11 :
+               F == 4'b1011 ? S12 :
+               F == 4'b1100 ? S13 :
+               F == 4'b1101 ? S14 :
+               F == 4'b1110 ? S15 :
+               F == 4'b1111 ? S16 : 63'b0;
+endmodule
+
+module ALU (
+    input [63:0]A,
+    input [63:0]B,
+    input [3:0]MODE,
+    output reg [63:0]S,
+    output [15:0]PSW);
+
+    parameter CF_BIT = 0;
+    parameter ZF_BIT = 1;
+    parameter OF_BIT = 2;
+
+    wire [63:0]adderS, suberS;
+    wire adderCF, suberOF;
+    Adder32 adder(.A (A), .B (B), .Ci(1'b0), .S(adderS), .Co(adderCF));
+    Suber32 suber(.A (A), .B (B), .S(suberS), .OF(suberOF));
+
+    reg [63:0]_PSW;
+
+    always @(*) begin
+        _PSW = 63'b0;
+        if (MODE == 4'b0000) begin
+            S = adderS;
+            if (adderCF == 1'b1) begin
+                _PSW = _PSW | (1 << CF_BIT);
+            end
+        end
+        else if (MODE == 4'b0001) begin
+            S = suberS;
+            if (suberOF == 1'b1) begin
+                _PSW = _PSW | (1 << OF_BIT);
+            end
+        end
+        else if (MODE == 4'b0010) begin
+        end
+        else if (MODE == 4'b0011) begin
+        end
+        else if (MODE == 4'b0100) begin
+            S = A & B;
+        end
+        else if (MODE == 4'b0101) begin
+            S = A | B;
+        end
+        else if (MODE == 4'b0110) begin
+            S = A ^ B;
+        end
+        else if (MODE == 4'b0111) begin
+            S = ~ A;
+        end
+
+        if (S == 64'b0) begin
+            _PSW = _PSW | (1 << ZF_BIT);
+        end
+    end
+
+    assign PSW = _PSW;
 endmodule
