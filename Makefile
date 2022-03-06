@@ -5,13 +5,13 @@ TBS_DIR := ./testbenchs
 SRC_DIR := ./src
 OUTPUT_DIR := ./output
 
-TEST_ADDER_TBS := $(TBS_DIR)/test_adder.v
-TEST_ADDER_SRC := $(SRC_DIR)/adder.v
-TEST_ADDER_INPUT := $(TEST_ADDER_TBS) $(TEST_ADDER_SRC)
-TEST_ADDER_OUTPUT := test_adder
+TEST_ALU_TBS := $(TBS_DIR)/test_alu.v
+TEST_ALU_SRC := $(SRC_DIR)/alu.v
+TEST_ALU_INPUT := $(TEST_ALU_TBS) $(TEST_ALU_SRC)
+TEST_ALU_OUTPUT := test_alu
 
-.PHONY: adder_test
+.PHONY: alu_test
 
-adder_test:
-	$(VERILOG) -o $(OUTPUT_DIR)/$(TEST_ADDER_OUTPUT) $(TEST_ADDER_INPUT)
-	cd $(OUTPUT_DIR)/ && $(WAVEGEN) -n $(TEST_ADDER_OUTPUT) -lxt2
+alu_test:
+	$(VERILOG) -I "src/" -o $(OUTPUT_DIR)/$(TEST_ALU_OUTPUT) $(TEST_ALU_INPUT)
+	cd $(OUTPUT_DIR)/ && $(WAVEGEN) -n $(TEST_ALU_OUTPUT) -lxt2

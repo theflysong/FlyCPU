@@ -1,3 +1,5 @@
+`include "para.v"
+
 module Adder(
     input A,
     input B,
@@ -140,7 +142,7 @@ module mux1621(
                F == 4'b1100 ? S13 :
                F == 4'b1101 ? S14 :
                F == 4'b1110 ? S15 :
-               F == 4'b1111 ? S16 : 63'b0;
+               F == 4'b1111 ? S16 : 64'b0;
 endmodule
 
 module ALU (
@@ -148,11 +150,8 @@ module ALU (
     input [63:0]B,
     input [3:0]MODE,
     output reg [63:0]S,
+    output reg [63:0]S2,
     output [15:0]PSW);
-
-    parameter CF_BIT = 0;
-    parameter ZF_BIT = 1;
-    parameter OF_BIT = 2;
 
     wire [63:0]adderS, suberS;
     wire adderCF, suberOF;
@@ -162,38 +161,44 @@ module ALU (
     reg [63:0]_PSW;
 
     always @(*) begin
-        _PSW = 63'b0;
-        if (MODE == 4'b0000) begin
+        _PSW = 64'b0;
+        if (MODE == `MODE_ADD) begin
             S = adderS;
+            S2 = 64'b0;
             if (adderCF == 1'b1) begin
-                _PSW = _PSW | (1 << CF_BIT);
+                _PSW = _PSW | (1 << `CF_BIT);
             end
         end
-        else if (MODE == 4'b0001) begin
+        else if (MODE == `MODE_SUB) begin
             S = suberS;
+            S2 = 64'b0;
             if (suberOF == 1'b1) begin
-                _PSW = _PSW | (1 << OF_BIT);
+                _PSW = _PSW | (1 << `OF_BIT);
             end
         end
-        else if (MODE == 4'b0010) begin
+        else if (MODE == `MODE_MUL) begin
         end
-        else if (MODE == 4'b0011) begin
+        else if (MODE == `MODE_DIV) begin
         end
-        else if (MODE == 4'b0100) begin
+        else if (MODE == `MODE_AND) begin
             S = A & B;
+            S2 = 64'b0;
         end
-        else if (MODE == 4'b0101) begin
+        else if (MODE == `MODE_OR) begin
             S = A | B;
+            S2 = 64'b0;
         end
-        else if (MODE == 4'b0110) begin
+        else if (MODE == `MODE_XOR) begin
             S = A ^ B;
+            S2 = 64'b0;
         end
-        else if (MODE == 4'b0111) begin
+        else if (MODE == `MODE_NOT) begin
             S = ~ A;
+            S2 = 64'b0;
         end
 
         if (S == 64'b0) begin
-            _PSW = _PSW | (1 << ZF_BIT);
+            _PSW = _PSW | (1 << `ZF_BIT);
         end
     end
 
